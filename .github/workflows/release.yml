@@ -33,7 +33,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-          cache: true
+          # Кэшировать нечего: у проекта нет внешних зависимостей (нет go.sum).
+          cache: false
 
       - name: Определить версию
         id: version

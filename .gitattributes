@@ -1,0 +1,5 @@
+# Скрипты и исходники всегда с LF: CRLF ломает shebang в Linux.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.zip binary

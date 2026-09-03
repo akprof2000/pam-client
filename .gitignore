@@ -1,0 +1,18 @@
+# Исходные материалы и выгрузки, не предназначенные для публикации
+data.zip
+*.zip
+
+# Результаты сборки
+/dist/
+/pamget
+/pamget.exe
+/fakepam
+/fakepam.exe
+
+# Локальные артефакты
+*.pem
+*.log
+coverage.out
+
+# Корпуса фаззинга, создаваемые go test -fuzz
+/pam/testdata/fuzz/

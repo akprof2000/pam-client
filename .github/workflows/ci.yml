@@ -1,0 +1,55 @@
+name: CI
+
+# Проверки на каждый push и pull request: сборка, go vet, тесты, gofmt.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Тесты (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: gofmt
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "Не отформатировано (запустите gofmt -w):"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Тесты с покрытием
+        run: go test -cover ./...
+
+      - name: Фаззинг разбора пути (коротко)
+        if: matrix.os == 'ubuntu-latest'
+        run: go test ./pam/ -run xxx -fuzz FuzzParsePath -fuzztime 30s
+
+      - name: Гонки данных
+        if: matrix.os == 'ubuntu-latest'
+        run: go test -race ./...
+
+      - name: Демонстрационный сценарий
+        if: matrix.os == 'ubuntu-latest'
+        run: ./scripts/demo.sh

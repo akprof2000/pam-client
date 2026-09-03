@@ -1,0 +1,84 @@
+name: Release
+
+# Релиз собирается при пуше тега вида v1.2.3 (семантическое версионирование).
+# Тег и есть версия: она попадает в имена архивов и в вывод `pamget -version`.
+#
+# Как выпустить релиз:
+#   git tag -a v1.0.0 -m "первый релиз"
+#   git push origin v1.0.0
+#
+# Workflow можно запустить и вручную (кнопка Run workflow), указав версию.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Версия, например v1.0.0"
+        required: true
+
+permissions:
+  contents: write # нужно, чтобы создать релиз и загрузить архивы
+
+jobs:
+  release:
+    name: Сборка и публикация релиза
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # нужна вся история, чтобы git describe видел теги
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: Определить версию
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ github.event.inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Версия релиза: ${version}"
+
+      - name: Проверки
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Сборка архивов
+        run: ./scripts/release.sh "${{ steps.version.outputs.version }}"
+
+      - name: Содержимое dist/
+        run: ls -lh dist/
+
+      - name: Публикация релиза
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          body: |
+            Архивы для Windows (zip) и Linux/CentOS (tar.gz), amd64 и arm64.
+            Бинарники собраны с `CGO_ENABLED=0` и не зависят от версии glibc.
+
+            Проверка целостности:
+
+            ```bash
+            sha256sum -c SHA256SUMS
+            ```
+
+            Установка библиотеки:
+
+            ```bash
+            go get github.com/akprof2000/pam-client@${{ steps.version.outputs.version }}
+            ```

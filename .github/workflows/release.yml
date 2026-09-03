@@ -58,6 +58,17 @@ jobs:
       - name: Содержимое dist/
         run: ls -lh dist/
 
+      # Артефакт сборки нужен только для разбора неудачного прогона,
+      # поэтому хранится один день. Постоянные копии живут в Releases:
+      # на файлы релиза срок хранения артефактов не распространяется.
+      - name: Сохранить архивы как артефакт сборки (1 день)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 1
+          if-no-files-found: error
+
       - name: Публикация релиза
         uses: softprops/action-gh-release@v2
         with:

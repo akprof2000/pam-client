@@ -16,3 +16,4 @@ coverage.out
 
 # Корпуса фаззинга, создаваемые go test -fuzz
 /pam/testdata/fuzz/
+build/

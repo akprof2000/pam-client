@@ -54,3 +54,20 @@ jobs:
       - name: Демонстрационный сценарий
         if: matrix.os == 'ubuntu-latest'
         run: ./scripts/demo.sh
+
+      # Сборка для быстрой проверки на тестовом стенде. Хранится один день:
+      # это промежуточный результат, а не релиз.
+      - name: Пробная сборка бинарников
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p build
+          CGO_ENABLED=0 go build -trimpath -o build/ ./cmd/...
+
+      - name: Сохранить бинарники как артефакт (1 день)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pam-client-linux-amd64
+          path: build/
+          retention-days: 1
+          if-no-files-found: error

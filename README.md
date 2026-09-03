@@ -1,5 +1,13 @@
 # pam-client
 
+[![CI](https://github.com/akprof2000/pam-client/actions/workflows/ci.yml/badge.svg)](https://github.com/akprof2000/pam-client/actions/workflows/ci.yml)
+[![Release](https://github.com/akprof2000/pam-client/actions/workflows/release.yml/badge.svg)](https://github.com/akprof2000/pam-client/actions/workflows/release.yml)
+[![Последний релиз](https://img.shields.io/github/v/release/akprof2000/pam-client?label=релиз&sort=semver)](https://github.com/akprof2000/pam-client/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/akprof2000/pam-client.svg)](https://pkg.go.dev/github.com/akprof2000/pam-client)
+[![Go Report Card](https://goreportcard.com/badge/github.com/akprof2000/pam-client)](https://goreportcard.com/report/github.com/akprof2000/pam-client)
+[![Go](https://img.shields.io/github/go-mod/go-version/akprof2000/pam-client)](go.mod)
+[![Лицензия: MIT](https://img.shields.io/badge/лицензия-MIT-blue.svg)](LICENSE)
+
 Go-клиент и консольная утилита для получения секретов из PAM по протоколу
 **AAPM REST API** (Application-to-Application Password Management, Kron PAM).
 

@@ -98,6 +98,7 @@ go get github.com/akprof2000/pam-client
 | `-list` | `false` | показать записи, доступные токену |
 | `-field` | — | вывести одно поле: `username`, `password`, `data`, `ssl-certificate`, `ssh-key`, `passphrase` |
 | `-raw` | `false` | только значение секрета, без оформления |
+| `-env` | `false` | все поля записи как присваивания переменных оболочки |
 | `-json` | `false` | весь ответ (секрет + метаданные) в JSON |
 | `-insecure` | `false` | не проверять сертификат сервера |
 | `-ca` | — | файл доверенного корневого сертификата (PEM) |
@@ -116,13 +117,47 @@ go get github.com/akprof2000/pam-client
 при перенаправлении в файл или конвейер, а также при `NO_COLOR=1`,
 escape-последовательности не выводятся.
 
-Три режима для автоматизации:
+Режимы для автоматизации:
 
 ```bash
 pamget -secret /группа/имя -raw                 # только значение
 pamget -secret /группа/имя -field username      # одно поле
 pamget -secret /группа/имя -json                # весь ответ в JSON
+pamget -secret /группа/имя -env                 # все поля как переменные оболочки
 ```
+
+### Логин и пароль за один запрос
+
+`-field` возвращает одно поле, поэтому логин и пароль по отдельности — это два
+запуска и две записи в журнале аудита PAM. Режим `-env` печатает все поля сразу:
+
+```bash
+eval "$(pamget -secret /Группа/Подгруппа/имя_записи -env -comment "запуск из скрипта")"
+echo "логин:  $PAM_USERNAME"
+echo "пароль: $PAM_PASSWORD"
+```
+
+Что печатает `-env`:
+
+```
+PAM_PASSWORD='example-password'
+PAM_USERNAME='example-username'
+PAM_KIND='user_credentials'
+```
+
+Соответствие имён: `username` → `$PAM_USERNAME`, `password` → `$PAM_PASSWORD`,
+`data` → `$PAM_DATA`, `ssl-certificate` → `$PAM_SSL_CERTIFICATE`,
+`ssh-key` → `$PAM_SSH_KEY`, `passphrase` → `$PAM_PASSPHRASE`.
+Дополнительно приходит `$PAM_KIND` — тип записи, по нему скрипт может
+убедиться, что получил ожидаемое:
+
+```bash
+[[ "$PAM_KIND" == "user_credentials" ]] || { echo "неожиданный тип: $PAM_KIND" >&2; exit 1; }
+```
+
+Значения заключаются в одинарные кавычки с экранированием `'` → `'''`,
+поэтому через `eval` безопасно проходят пароли со спецсимволами и
+многострочные значения — ssh-ключи и сертификаты.
 
 ### Коды возврата
 

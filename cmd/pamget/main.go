@@ -52,6 +52,7 @@ func run() error {
 		field    = flag.String("field", "", "вывести конкретное поле: username|password|data|ssl-certificate|ssh-key|passphrase")
 		asJSON   = flag.Bool("json", false, "вывести весь ответ в JSON")
 		raw      = flag.Bool("raw", false, "вывести только значение секрета, без оформления (для скриптов)")
+		asEnv    = flag.Bool("env", false, "вывести все поля как присваивания переменных оболочки: eval \"$(pamget ... -env)\"")
 		expire   = flag.Int("expire", 0, "срок жизни пароля в минутах (0 — значение клиента, отрицательное — не передавать)")
 		change   = flag.Bool("change-required", false, "требовать смену пароля после выдачи")
 		comment  = flag.String("comment", "", "комментарий для журнала аудита PAM")
@@ -105,7 +106,7 @@ func run() error {
 	if *list {
 		return printList(ctx, client, *asJSON)
 	}
-	return printSecret(ctx, client, *secret, *field, *asJSON, *raw, *change)
+	return printSecret(ctx, client, *secret, *field, *asJSON, *raw, *asEnv, *change)
 }
 
 // printList печатает записи, доступные текущему токену.
@@ -122,7 +123,7 @@ func printList(ctx context.Context, client *pam.Client, asJSON bool) error {
 }
 
 // printSecret получает секрет и печатает его в выбранном формате.
-func printSecret(ctx context.Context, client *pam.Client, fullPath, field string, asJSON, raw, changeRequired bool) error {
+func printSecret(ctx context.Context, client *pam.Client, fullPath, field string, asJSON, raw, asEnv, changeRequired bool) error {
 	// Путь вида /группа/имя разбивается на две части запроса.
 	accountPath, accountName, err := pam.ParsePath(fullPath)
 	if err != nil {
@@ -146,6 +147,11 @@ func printSecret(ctx context.Context, client *pam.Client, fullPath, field string
 			"secret":     s.Raw,
 			"properties": s.Properties,
 		})
+
+	case asEnv:
+		// Все поля сразу — чтобы скрипту хватило одного запроса к PAM
+		// (и одной записи в журнале аудита).
+		printEnv(s)
 
 	case field != "":
 		// Конкретное поле — удобно для скриптов.

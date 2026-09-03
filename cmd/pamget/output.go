@@ -184,3 +184,37 @@ func printAccountsPretty(accounts []pam.AccountInfo) {
 	}
 	fmt.Println()
 }
+
+// envVarName превращает имя поля секрета в имя переменной окружения:
+// "ssl-certificate" -> "PAM_SSL_CERTIFICATE".
+func envVarName(field string) string {
+	name := strings.ToUpper(strings.NewReplacer("-", "_", ".", "_", " ", "_").Replace(field))
+	return "PAM_" + name
+}
+
+// shellQuote заключает значение в одинарные кавычки для оболочки.
+// Внутри одинарных кавычек не действует ничего, кроме самой кавычки,
+// поэтому её заменяем на последовательность '\” — так безопасно
+// передаются и многострочные ключи, и значения со спецсимволами.
+func shellQuote(v string) string {
+	return "'" + strings.ReplaceAll(v, "'", `'\''`) + "'"
+}
+
+// printEnv печатает присваивания переменных оболочки: один запрос к PAM —
+// все поля записи сразу. Применяется через eval:
+//
+//	eval "$(pamget -secret /группа/имя -env)"
+//	echo "$PAM_USERNAME" "$PAM_PASSWORD"
+func printEnv(s *pam.Secret) {
+	names := make([]string, 0, len(s.Raw))
+	for name := range s.Raw {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		fmt.Printf("%s=%s\n", envVarName(name), shellQuote(s.Raw[name]))
+	}
+	// Тип записи тоже пригодится: по нему скрипт понимает, что именно пришло.
+	fmt.Printf("PAM_KIND=%s\n", shellQuote(string(s.Kind)))
+}

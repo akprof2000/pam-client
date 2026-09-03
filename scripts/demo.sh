@@ -70,6 +70,13 @@ done
 run "весь ответ в JSON" "${PAMGET[@]}" -server "${SERVER}" -token "${TOKEN}" -ca "${CERT}" \
   -secret "${GROUP}/static_ssh_key" -json
 
+echo
+echo "--- один запрос, все поля в переменные оболочки (-env)"
+eval "$("${PAMGET[@]}" -server "${SERVER}" -token "${TOKEN}" -ca "${CERT}"   -secret "${GROUP}/static_user_credentials" -env -comment "demo.sh")"
+echo "тип:    ${PAM_KIND}"
+echo "логин:  ${PAM_USERNAME}"
+echo "пароль: ${PAM_PASSWORD}"
+
 run "отдельное поле (passphrase)" "${PAMGET[@]}" -server "${SERVER}" -token "${TOKEN}" -ca "${CERT}" \
   -secret "${GROUP}/static_ssh_key" -field passphrase
 

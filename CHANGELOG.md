@@ -5,6 +5,17 @@
 
 ## [Не выпущено]
 
+## [1.1.0] — 2026-09-03
+
+### Добавлено
+
+- Режим `pamget -env`: все поля записи выводятся как присваивания переменных
+  оболочки (`PAM_USERNAME`, `PAM_PASSWORD`, `PAM_SSH_KEY`, ... и `PAM_KIND`).
+  Позволяет получить логин и пароль одним запросом к PAM вместо двух вызовов
+  с `-field`, то есть одной записью в журнале аудита. Значения экранируются
+  для безопасного применения через `eval`, включая многострочные ключи
+  и сертификаты.
+
 ## [1.0.0] — 2026-09-03
 
 Первый выпуск.
@@ -24,5 +35,6 @@
 - Демонстрационные сценарии `scripts/demo.sh` и `scripts/demo.ps1`.
 - Сборка релизных архивов для Windows и Linux (amd64, arm64).
 
-[Не выпущено]: https://github.com/akprof2000/pam-client/compare/v1.0.0...HEAD
+[Не выпущено]: https://github.com/akprof2000/pam-client/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/akprof2000/pam-client/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/akprof2000/pam-client/releases/tag/v1.0.0

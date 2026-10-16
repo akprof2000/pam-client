@@ -173,7 +173,34 @@ func accountItems(body []byte) ([]json.RawMessage, error) {
 // rawResponse — форма ответа REST API.
 type rawResponse struct {
 	Secret     map[string]string `json:"secret"`
-	Properties Properties        `json:"properties"`
+	Properties json.RawMessage   `json:"properties"`
+}
+
+// parseProperties разбирает блок "properties" по одному полю. Боевой PAM
+// отдаёт часть полей не в том виде, что описан в документации (например,
+// "device" приходит объектом), и строгий разбор всей структуры ронял
+// получение секрета. Метаданные секрету не нужны, поэтому поле, которое не
+// подходит по типу, пропускается; "device" в таком случае сохраняется как
+// исходный JSON.
+func parseProperties(data json.RawMessage) Properties {
+	var p Properties
+	var fields map[string]json.RawMessage
+	if len(data) == 0 || json.Unmarshal(data, &fields) != nil {
+		return p
+	}
+	for k, v := range fields {
+		one, _ := json.Marshal(map[string]json.RawMessage{k: v})
+		var probe Properties
+		if err := json.Unmarshal(one, &probe); err != nil {
+			if k == "device" {
+				d := string(v)
+				p.Device = &d
+			}
+			continue
+		}
+		_ = json.Unmarshal(one, &p)
+	}
+	return p
 }
 
 // parseSecret разбирает тело ответа AAPM и определяет тип записи.
@@ -193,7 +220,7 @@ func parseSecret(body []byte) (*Secret, error) {
 
 	s := &Secret{
 		Raw:         raw.Secret,
-		Properties:  raw.Properties,
+		Properties:  parseProperties(raw.Properties),
 		Username:    raw.Secret[fieldUsername],
 		Password:    raw.Secret[fieldPassword],
 		Data:        raw.Secret[fieldData],
